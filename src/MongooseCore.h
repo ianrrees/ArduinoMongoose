@@ -6,7 +6,7 @@
 #include <IPAddress.h>
 #endif // ARDUINO
 
-#include "mongoose.h"
+#include "mongoose/mongoose.h"
 
 #ifndef ARDUINO_MONGOOSE_DEFAULT_ROOT_CA
 #define ARDUINO_MONGOOSE_DEFAULT_ROOT_CA ""

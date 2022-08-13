@@ -10,7 +10,7 @@
 
 #endif
 
-#include <mongoose.h>
+#include "mongoose/mongoose.h"
 
 #include <functional>
 

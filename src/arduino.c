@@ -1,7 +1,7 @@
 #ifdef ARDUINO
 
 #include <Arduino.h>
-#include "mongoose.h"
+#include "mongoose/mongoose.h"
 
 /*
  * This is a callback invoked by Mongoose to signal that a poll is needed soon.

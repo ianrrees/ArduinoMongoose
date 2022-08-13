@@ -5,7 +5,7 @@
 #include "Arduino.h"
 #endif
 
-#include "mongoose.h"
+#include "mongoose/mongoose.h"
 
 class MongooseString
 {
