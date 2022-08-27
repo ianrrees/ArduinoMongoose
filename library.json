@@ -95,5 +95,13 @@
       "name": "Micro Debug",
       "version": "~0.0.5"
     }
-  ]
+  ],
+  "build": {
+    "srcFilter": [
+      "+<*>",
+      "-<.git/>",
+      "-<mongoose/examples/>",
+      "-<mongoose/test/>"
+    ]
+  }
 }
