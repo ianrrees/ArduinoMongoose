@@ -29,11 +29,13 @@ bool MongooseHttpServer::begin(uint16_t port)
 {
   char s_http_port[6];
   utoa(port, s_http_port, 10);
-  nc = mg_bind(Mongoose.getMgr(), s_http_port, defaultEventHandler, this);
+  // TODO
+  // nc = mg_bind(Mongoose.getMgr(), s_http_port, defaultEventHandler, this);
   if(nc)
   {
     // Set up HTTP server parameters
-    mg_set_protocol_http_websocket(nc);
+    // TODO
+    // mg_set_protocol_http_websocket(nc);
 
     return true;
   }
@@ -47,19 +49,22 @@ bool MongooseHttpServer::begin(uint16_t port, const char *cert, const char *priv
   char s_http_port[6];
   utoa(port, s_http_port, 10);
 
-  struct mg_bind_opts bind_opts;
-  const char *err;
+  // TODO
+  // struct mg_bind_opts bind_opts;
+  // const char *err;
+  //
+  // memset(&bind_opts, 0, sizeof(bind_opts));
+  // bind_opts.ssl_cert = cert;
+  // bind_opts.ssl_key = private_key;
+  // bind_opts.error_string = &err;
 
-  memset(&bind_opts, 0, sizeof(bind_opts));
-  bind_opts.ssl_cert = cert;
-  bind_opts.ssl_key = private_key;
-  bind_opts.error_string = &err;
-
-  nc = mg_bind_opt(Mongoose.getMgr(), s_http_port, defaultEventHandler, this, bind_opts);
+  // TODO
+  // nc = mg_bind_opt(Mongoose.getMgr(), s_http_port, defaultEventHandler, this, bind_opts);
   if(nc)
   {
     // Set up HTTP server parameters
-    mg_set_protocol_http_websocket(nc);
+    // TODO
+    // mg_set_protocol_http_websocket(nc);
 
     return true;
   }
@@ -87,7 +92,8 @@ MongooseHttpServerEndpoint *MongooseHttpServer::on(const char* uri, HttpRequestM
 {
   MongooseHttpServerEndpoint *handler = new MongooseHttpServerEndpoint(this, method);
 
-  mg_register_http_endpoint(nc, uri, endpointEventHandler, handler);
+  // TODO
+  // mg_register_http_endpoint(nc, uri, endpointEventHandler, handler);
 
   return handler;
 }
@@ -118,116 +124,129 @@ void MongooseHttpServer::eventHandler(struct mg_connection *nc, int ev, void *p,
   switch (ev) {
     case MG_EV_ACCEPT: {
       char addr[32];
-      mg_sock_addr_to_str(&nc->sa, addr, sizeof(addr),
-                          MG_SOCK_STRINGIFY_IP | MG_SOCK_STRINGIFY_PORT);
+      // TODO
+      // mg_sock_addr_to_str(&nc->sa, addr, sizeof(addr),
+      //                     MG_SOCK_STRINGIFY_IP | MG_SOCK_STRINGIFY_PORT);
       DBUGF("Connection %p from %s", nc, addr);
       break;
     }
 #if MG_ENABLE_HTTP_STREAMING_MULTIPART
-    case MG_EV_HTTP_MULTIPART_REQUEST:
+    // TODO
+    // case MG_EV_HTTP_MULTIPART_REQUEST:
 #endif
 #if MG_ENABLE_HTTP_WEBSOCKET
     case MG_EV_WEBSOCKET_HANDSHAKE_REQUEST:
 #endif
-    case MG_EV_HTTP_REQUEST: {
+    // TODO
+    // case MG_EV_HTTP_REQUEST:
+    {
       char addr[32];
-      struct http_message *hm = (struct http_message *) p;
-      mg_sock_addr_to_str(&nc->sa, addr, sizeof(addr),
-                          MG_SOCK_STRINGIFY_IP | MG_SOCK_STRINGIFY_PORT);
-      DBUGF("HTTP request from %s: %.*s %.*s", addr, (int) hm->method.len,
-             hm->method.p, (int) hm->uri.len, hm->uri.p);
-
-      if(nc->user_connection_data) {
-        delete (MongooseHttpServerRequest *)nc->user_connection_data;
-        nc->user_connection_data = NULL;
-      }
+      struct mg_http_message *hm = (struct mg_http_message *) p;
+      // TODO
+      // mg_sock_addr_to_str(&nc->sa, addr, sizeof(addr),
+      //                     MG_SOCK_STRINGIFY_IP | MG_SOCK_STRINGIFY_PORT);
+      // DBUGF("HTTP request from %s: %.*s %.*s", addr, (int) hm->method.len,
+      //        hm->method.p, (int) hm->uri.len, hm->uri.p);
+      // TODO
+      // if(nc->user_connection_data) {
+      //   delete (MongooseHttpServerRequest *)nc->user_connection_data;
+      //   nc->user_connection_data = NULL;
+      // }
       MongooseHttpServerRequest *request = 
 #if MG_ENABLE_HTTP_STREAMING_MULTIPART
-        MG_EV_HTTP_MULTIPART_REQUEST == ev ? new MongooseHttpServerRequestUpload(this, nc, hm) :
+        // TODO
+        // MG_EV_HTTP_MULTIPART_REQUEST == ev ? new MongooseHttpServerRequestUpload(this, nc, hm) :
 #endif
 #if MG_ENABLE_HTTP_WEBSOCKET
         MG_EV_WEBSOCKET_HANDSHAKE_REQUEST == ev ? new MongooseHttpWebSocketConnection(this, nc, hm) :
 #endif
                                              new MongooseHttpServerRequest(this, nc, hm);
-      if(request)
-      {
-        nc->user_connection_data = request;
+// TODO
+//       if(request)
+//       {
+//         nc->user_connection_data = request;
 
-        if(endpoint->request) 
-        {
-          endpoint->request(request);
-#if MG_ENABLE_HTTP_WEBSOCKET
-        } else if(endpoint->wsFrame) {
+//         if(endpoint->request) 
+//         {
+//           endpoint->request(request);
+// #if MG_ENABLE_HTTP_WEBSOCKET
+//         } else if(endpoint->wsFrame) {
 
-#endif
-        } else {
-          mg_http_send_error(nc, 404, NULL);
-        }
-      } else {
-        mg_http_send_error(nc, 500, NULL);
-      }
+// #endif
+//         } else {
+//           mg_http_send_error(nc, 404, NULL);
+//         }
+//       } else {
+//         mg_http_send_error(nc, 500, NULL);
+//       }
       break;
     }
 
 #if MG_ENABLE_HTTP_STREAMING_MULTIPART
-    case MG_EV_HTTP_PART_BEGIN:
-    case MG_EV_HTTP_PART_DATA:
-    case MG_EV_HTTP_PART_END:
+    // TODO
+    // case MG_EV_HTTP_PART_BEGIN:
+    // case MG_EV_HTTP_PART_DATA:
+    // case MG_EV_HTTP_PART_END:
     {
-      DBUGF("nc->user_connection_data = %p", nc->user_connection_data);
-      if(nc->user_connection_data)
-      {
-        struct mg_http_multipart_part *mp = (struct mg_http_multipart_part *) p;
-        MongooseHttpServerRequestUpload *request = (MongooseHttpServerRequestUpload *)nc->user_connection_data;
+      // TODO
+      // DBUGF("nc->user_connection_data = %p", nc->user_connection_data);
+      // if(nc->user_connection_data)
+      // {
+      //   struct mg_http_multipart_part *mp = (struct mg_http_multipart_part *) p;
+      //   MongooseHttpServerRequestUpload *request = (MongooseHttpServerRequestUpload *)nc->user_connection_data;
  
-        if(!request->_responseSent && endpoint->upload) {
-          mp->num_data_consumed = endpoint->upload(request, ev, MongooseString(mg_mk_str(mp->file_name)), 
-                                           request->index, (uint8_t*)mp->data.p, mp->data.len);
-        }
+      //   if(!request->_responseSent && endpoint->upload) {
+      //     mp->num_data_consumed = endpoint->upload(request, ev, MongooseString(mg_mk_str(mp->file_name)), 
+      //                                      request->index, (uint8_t*)mp->data.p, mp->data.len);
+      //   }
 
-        request->index += mp->num_data_consumed;
-      }
+      //   request->index += mp->num_data_consumed;
+      // }
       break;
     }
 #endif // MG_ENABLE_HTTP_STREAMING_MULTIPART
 
     case MG_EV_POLL:
-    case MG_EV_SEND:
+    // TODO
+    // case MG_EV_SEND:
     {
-      if(nc->user_connection_data)
-      {
-        MongooseHttpServerRequest *request = (MongooseHttpServerRequest *)nc->user_connection_data;
-        if(request->responseSent()) {
-          request->sendBody();
-        }
-      }
+      // TODO
+      // if(nc->user_connection_data)
+      // {
+      //   MongooseHttpServerRequest *request = (MongooseHttpServerRequest *)nc->user_connection_data;
+      //   if(request->responseSent()) {
+      //     request->sendBody();
+      //   }
+      // }
 
       break;
     }
 
-    case MG_EV_RECV:
+    // TODO
+    // case MG_EV_RECV:
     {
 
 #ifdef ENABLE_DEBUG
       int *num_bytes = (int *)p;
-#endif
       DBUGF("Received %d bytes", *num_bytes);
+#endif
       break;
     }
 
     case MG_EV_CLOSE: {
       DBUGF("Connection %p closed", nc);
-      if(nc->user_connection_data) 
-      {
-        MongooseHttpServerRequest *request = (MongooseHttpServerRequest *)nc->user_connection_data;
+      // TODO
+      // if(nc->user_connection_data) 
+      // {
+      //   MongooseHttpServerRequest *request = (MongooseHttpServerRequest *)nc->user_connection_data;
 
-        if(endpoint->close) {
-          endpoint->close(request);
-        }
+      //   if(endpoint->close) {
+      //     endpoint->close(request);
+      //   }
 
-        delete request;
-        nc->user_connection_data = NULL;
-      } 
+      //   delete request;
+      //   nc->user_connection_data = NULL;
+      // } 
       break;
     }
 
@@ -283,7 +302,7 @@ void MongooseHttpServer::sendAll(MongooseHttpWebSocketConnection *from, const ch
 
 /// MongooseHttpServerRequest object
 
-MongooseHttpServerRequest::MongooseHttpServerRequest(MongooseHttpServer *server, mg_connection *nc, http_message *msg) :
+MongooseHttpServerRequest::MongooseHttpServerRequest(MongooseHttpServer *server, mg_connection *nc, mg_http_message *msg) :
   _server(server),
   _nc(nc),
 #if MG_COPY_HTTP_MESSAGE
@@ -319,7 +338,8 @@ MongooseHttpServerRequest::~MongooseHttpServerRequest()
   }
 
 #if MG_COPY_HTTP_MESSAGE
-  mg_strfree(&_msg->message);
+  // TODO
+  // mg_strfree(&_msg->message);
   delete _msg;
   _msg = NULL;
 #endif
@@ -330,35 +350,38 @@ MongooseHttpServerRequest::~MongooseHttpServerRequest()
 mg_str mg_mk_str_from_offsets(mg_str &dest, mg_str &src, mg_str &value) {
   mg_str s;
 
-  s.p = value.p ? (dest.p + (value.p - src.p)) : NULL;
+  s.ptr = value.ptr ? (dest.ptr + (value.ptr - src.ptr)) : NULL;
   s.len = value.len;
 
   return s;
 }
 
-http_message *MongooseHttpServerRequest::duplicateMessage(http_message *sm)
+mg_http_message *MongooseHttpServerRequest::duplicateMessage(mg_http_message *sm)
 {
-  http_message *nm = new http_message();
+  mg_http_message *nm = new mg_http_message();
   memset(nm, 0, sizeof(*nm));
 
-  mg_str headers = mg_mk_str_n(sm->message.p, sm->message.len - sm->body.len);
+  mg_str headers = mg_str_n(sm->message.ptr, sm->message.len - sm->body.len);
 
-  nm->message = mg_strdup_nul(headers);
+  // TODO
+  // nm->message = mg_strdup_nul(headers);
   nm->body = sm->body;
 
   nm->method = mg_mk_str_from_offsets(nm->message, sm->message, sm->method);
   nm->uri = mg_mk_str_from_offsets(nm->message, sm->message, sm->uri);
   nm->proto = mg_mk_str_from_offsets(nm->message, sm->message, sm->proto);
 
-  nm->resp_code = sm->resp_code;
-  nm->resp_status_msg = mg_mk_str_from_offsets(nm->message, sm->message, sm->resp_status_msg);
+  // TODO
+  // nm->resp_code = sm->resp_code;
+  // nm->resp_status_msg = mg_mk_str_from_offsets(nm->message, sm->message, sm->resp_status_msg);
 
-  nm->query_string = mg_mk_str_from_offsets(nm->message, sm->message, sm->query_string);
+  // TODO
+  // nm->query_string = mg_mk_str_from_offsets(nm->message, sm->message, sm->query_string);
 
   for(int i = 0; i < MG_MAX_HTTP_HEADERS; i++)
   {
-    nm->header_names[i] = mg_mk_str_from_offsets(nm->message, sm->message, sm->header_names[i]);
-    nm->header_values[i] = mg_mk_str_from_offsets(nm->message, sm->message, sm->header_values[i]);
+    nm->headers[i].name = mg_mk_str_from_offsets(nm->message, sm->message, sm->headers[i].name);
+    nm->headers[i].value = mg_mk_str_from_offsets(nm->message, sm->message, sm->headers[i].value);
   }
   
   return nm;
@@ -408,14 +431,15 @@ void MongooseHttpServerRequest::sendBody()
 {
   if(_response) 
   {
-    size_t free = _nc->send_mbuf.size - _nc->send_mbuf.len;
-    if(0 == _nc->send_mbuf.size) {
+    size_t free = _nc->send.size - _nc->send.len;
+    if(0 == _nc->send.size) {
       free = ARDUINO_MONGOOSE_SEND_BUFFER_SIZE;
     }
     if(free > 0) 
     {
       size_t sent = _response->sendBody(_nc, free);
-      DBUGF("Connection %p: sent %u/%u, %lx", _nc, sent, free, _nc->flags & MG_F_SEND_AND_CLOSE);
+      // TODO
+      // DBUGF("Connection %p: sent %u/%u, %lx", _nc, sent, free, _nc->flags & MG_F_SEND_AND_CLOSE);
 
       if(sent < free) {
         DBUGLN("Response finished");
@@ -430,7 +454,8 @@ extern "C" const char *mg_status_message(int status_code);
 
 void MongooseHttpServerRequest::send(int code)
 {
-  send(code, "text/plain", mg_status_message(code));
+  // TODO
+  // send(code, "text/plain", mg_status_message(code));
 }
 
 void MongooseHttpServerRequest::send(int code, const char *contentType, const char *content)
@@ -441,9 +466,11 @@ void MongooseHttpServerRequest::send(int code, const char *contentType, const ch
       "Content-Type: %s",
       contentType);
 
-  mg_send_head(_nc, code, strlen(content), pheaders);
+  // TODO
+  // mg_send_head(_nc, code, strlen(content), pheaders);
   mg_send(_nc, content, strlen(content));
-  _nc->flags |= MG_F_SEND_AND_CLOSE;
+  // TODO
+  // _nc->flags |= MG_F_SEND_AND_CLOSE;
 
   if (pheaders != headers) free(pheaders);
 
@@ -485,7 +512,9 @@ bool MongooseHttpServerRequest::hasParam(const __FlashStringHelper * data) const
 
 int MongooseHttpServerRequest::getParam(const char *name, char *dst, size_t dst_len) const
 {
-  return mg_get_http_var((HTTP_GET == _method) ? (&_msg->query_string) : (&_msg->body), name, dst, dst_len);
+  // TODO
+  // return mg_get_http_var((HTTP_GET == _method) ? (&_msg->query_string) : (&_msg->body), name, dst, dst_len);
+  return 0;
 }
 
 #ifdef ARDUINO
@@ -571,17 +600,18 @@ bool MongooseHttpServerRequest::authenticate(const char * username, const char *
   char user_buf[64];
   char pass_buf[64];
 
-  if(0 == mg_get_http_basic_auth(_msg, user_buf, sizeof(user_buf),
-                           pass_buf, sizeof(pass_buf)))
-  {
-    DBUGVAR(user_buf);
-    DBUGVAR(pass_buf);
+  // TODO
+  // if(0 == mg_get_http_basic_auth(_msg, user_buf, sizeof(user_buf),
+  //                          pass_buf, sizeof(pass_buf)))
+  // {
+  //   DBUGVAR(user_buf);
+  //   DBUGVAR(pass_buf);
 
-    if(0 == strcmp(username, user_buf) && 0 == strcmp(password, pass_buf))
-    {
-      return true;
-    }
-  }
+  //   if(0 == strcmp(username, user_buf) && 0 == strcmp(password, pass_buf))
+  //   {
+  //     return true;
+  //   }
+  // }
 
   return false;
 }
@@ -596,8 +626,9 @@ void MongooseHttpServerRequest::requestAuthentication(const char* realm)
       "WWW-Authenticate: Basic realm=%s",
       realm);
 
-  mg_send_head(_nc, 401, 0, pheaders);
-  _nc->flags |= MG_F_SEND_AND_CLOSE;
+  // TODO several instances of SEND_AND_CLOSE...
+  // mg_send_head(_nc, 401, 0, pheaders);
+  // _nc->flags |= MG_F_SEND_AND_CLOSE;
 
   if (pheaders != headers) free(pheaders);
 
@@ -633,7 +664,8 @@ void MongooseHttpServerResponse::sendHeaders(struct mg_connection *nc)
       "Content-Type: %s%s",
       _contentType ? _contentType : "text/plain", _headerBuffer ? _headerBuffer : "");
 
-  mg_send_head(nc, _code, _contentLength, pheaders);
+  // TODO
+  // mg_send_head(nc, _code, _contentLength, pheaders);
 
   if(_headerBuffer) {
     free(_headerBuffer);
@@ -722,7 +754,8 @@ size_t MongooseHttpServerResponseBasic::sendBody(struct mg_connection *nc, size_
   len -= send;
 
   if(0 == len) {
-    nc->flags |= MG_F_SEND_AND_CLOSE;
+    // TODO see new bitfields
+    // nc->flags |= MG_F_SEND_AND_CLOSE;
   }
 
   return send;
@@ -731,19 +764,21 @@ size_t MongooseHttpServerResponseBasic::sendBody(struct mg_connection *nc, size_
 #ifdef ARDUINO
 MongooseHttpServerResponseStream::MongooseHttpServerResponseStream()
 {
-  mbuf_init(&_content, ARDUINO_MONGOOSE_DEFAULT_STREAM_BUFFER);
+  mg_iobuf_init(&_content, ARDUINO_MONGOOSE_DEFAULT_STREAM_BUFFER);
 }
 
 MongooseHttpServerResponseStream::~MongooseHttpServerResponseStream()
 {
-  mbuf_free(&_content);
+  mg_iobuf_free(&_content);
 }
 
 size_t MongooseHttpServerResponseStream::write(const uint8_t *data, size_t len)
 {
-  size_t written = mbuf_append(&_content, data, len);
-  setContentLength(_content.len);
-  return written;
+  return 0;
+  // TODO mg_iobuf_add() perhaps?
+  // size_t written = mbuf_append(&_content, data, len);
+  // setContentLength(_content.len);
+  // return written;
 }
 
 size_t MongooseHttpServerResponseStream::write(uint8_t data)
@@ -757,10 +792,12 @@ size_t MongooseHttpServerResponseStream::sendBody(struct mg_connection *nc, size
 
   mg_send(nc, _content.buf, send);
 
-  mbuf_remove(&_content, send);
+  // TODO check that mg_iobuf_del() could be used instead
+  // mbuf_remove(&_content, send);
 
   if(0 == _content.len) {
-    nc->flags |= MG_F_SEND_AND_CLOSE;
+    // TODO is_draining bitfield?
+    // nc->flags |= MG_F_SEND_AND_CLOSE;
   }
 
   return send;
@@ -769,7 +806,7 @@ size_t MongooseHttpServerResponseStream::sendBody(struct mg_connection *nc, size
 #endif
 
 #if MG_ENABLE_HTTP_WEBSOCKET
-MongooseHttpWebSocketConnection::MongooseHttpWebSocketConnection(MongooseHttpServer *server, mg_connection *nc, http_message *msg) :
+MongooseHttpWebSocketConnection::MongooseHttpWebSocketConnection(MongooseHttpServer *server, mg_connection *nc, mg_http_message *msg) :
   MongooseHttpServerRequest(server, nc, msg)
 {
   nc->flags |= MG_F_IS_MongooseHttpWebSocketConnection;

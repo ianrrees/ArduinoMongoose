@@ -23,7 +23,9 @@ MongooseCore::MongooseCore() :
 
 void MongooseCore::begin() 
 {
-  mg_mgr_init(&mgr, this);
+  // TODO did the context pointer ever get used?
+  // mg_mgr_init(&mgr, this);
+  mg_mgr_init(&mgr);
 
   ipConfigChanged();
 }
@@ -45,15 +47,16 @@ struct mg_mgr *MongooseCore::getMgr()
 
 void MongooseCore::getDefaultOpts(struct mg_connect_opts *opts, bool secure)
 {
-  memset(opts, 0, sizeof(*opts));
+// TODO
+//   memset(opts, 0, sizeof(*opts));
 
-#if MG_ENABLE_SSL
-  if(secure) {
-    opts->ssl_ca_cert = _rootCa;
-  }
-#else
-  (void)secure;
-#endif
+// #if MG_ENABLE_SSL
+//   if(secure) {
+//     opts->ssl_ca_cert = _rootCa;
+//   }
+// #else
+//   (void)secure;
+// #endif
 }
 
 
@@ -68,7 +71,7 @@ void MongooseCore::ipConfigChanged()
   }
 #endif
   _nameserver = dns.toString();
-  mg_set_nameserver(&mgr, _nameserver.c_str());
+  // mg_set_nameserver(&mgr, _nameserver.c_str());
 #endif
 #endif // ARDUINO
 }

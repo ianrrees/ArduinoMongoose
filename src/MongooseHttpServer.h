@@ -44,7 +44,7 @@ class MongooseHttpServerRequest {
   protected:
     MongooseHttpServer *_server;
     mg_connection *_nc;
-    http_message *_msg;
+    mg_http_message *_msg;
     HttpRequestMethodComposite _method;
     MongooseHttpServerResponse *_response;
     bool _responseSent;
@@ -52,11 +52,11 @@ class MongooseHttpServerRequest {
     void sendBody();
 
 #if MG_COPY_HTTP_MESSAGE
-    http_message *duplicateMessage(http_message *);
+    mg_http_message *duplicateMessage(mg_http_message *);
 #endif
 
   public:
-    MongooseHttpServerRequest(MongooseHttpServer *server, mg_connection *nc, http_message *msg);
+    MongooseHttpServerRequest(MongooseHttpServer *server, mg_connection *nc, mg_http_message *msg);
     virtual ~MongooseHttpServerRequest();
 
     virtual bool isUpload() { return false; }
@@ -84,31 +84,35 @@ class MongooseHttpServerRequest {
     }
 
     int respCode() {
-      return _msg->resp_code;
+      return 0;
+      // TODO probably mg_http_status()
+      // return _msg->resp_code;
     }
     MongooseString respStatusMsg() {
-      return MongooseString(_msg->resp_status_msg);
+      return "";
+      // return MongooseString(_msg->resp_status_msg);
     }
 
     MongooseString queryString() {
-      return MongooseString(_msg->query_string);
+      return "";
+      // return MongooseString(_msg->query_string);
     }
 
     int headers() {
       int i;
-      for (i = 0; i < MG_MAX_HTTP_HEADERS && _msg->header_names[i].len > 0; i++) {
+      for (i = 0; i < MG_MAX_HTTP_HEADERS && _msg->headers[i].name.len > 0; i++) {
       }
       return i;
     }
     MongooseString headers(const char *name) {
-      MongooseString ret(mg_get_http_header(_msg, name));
+      MongooseString ret(mg_http_get_header(_msg, name));
       return ret;
     }
     MongooseString headerNames(int i) {
-      return MongooseString(_msg->header_names[i]);
+      return MongooseString(_msg->headers[i].name);
     }
     MongooseString headerValues(int i) {
-      return MongooseString(_msg->header_values[i]);
+      return MongooseString(_msg->headers[i].value);
     }
 
     MongooseString host() {
@@ -186,7 +190,7 @@ class MongooseHttpServerRequestUpload : public MongooseHttpServerRequest
     uint64_t index;
 
   public:
-    MongooseHttpServerRequestUpload(MongooseHttpServer *server, mg_connection *nc, http_message *msg) :
+    MongooseHttpServerRequestUpload(MongooseHttpServer *server, mg_connection *nc, mg_http_message *msg) :
       MongooseHttpServerRequest(server, nc, msg),
       index(0)
     {
@@ -258,7 +262,7 @@ class MongooseHttpServerResponseStream:
   public Print
 {
   private:
-    mbuf _content;
+    mg_iobuf _content;
 
   public:
     MongooseHttpServerResponseStream();
