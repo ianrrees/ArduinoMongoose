@@ -26,7 +26,7 @@ MongooseSntpClient::~MongooseSntpClient()
 
 }
 
-void MongooseSntpClient::eventHandler(struct mg_connection *nc, int ev, void *p, void *u)
+/*static*/ void MongooseSntpClient::eventHandler(struct mg_connection *nc, int ev, void *p, void *u)
 {
   MongooseSntpClient *self = (MongooseSntpClient *)u;
   self->eventHandler(nc, ev, p);
@@ -34,19 +34,23 @@ void MongooseSntpClient::eventHandler(struct mg_connection *nc, int ev, void *p,
 
 void MongooseSntpClient::eventHandler(struct mg_connection *nc, int ev, void *p)
 {
-  struct mg_sntp_message *msg = (struct mg_sntp_message *) p;
-
   if (ev != MG_EV_POLL) { DBUGF("%s %p: %d", __PRETTY_FUNCTION__, nc, ev); }
 
   switch (ev) 
   {
-    case MG_SNTP_REPLY:
+    case MG_EV_SNTP_TIME:
       if(_onTime) {
-        _onTime(msg->tv);
+        uint64_t milliseconds = *(uint64_t *)p;
+
+        struct timeval time{};
+        time.tv_sec = milliseconds / 1000;
+        time.tv_usec = 1000 * (milliseconds - 1000 * time.tv_sec);
+        
+        _onTime(time);
       }
       break;
 
-    case MG_SNTP_FAILED:
+    case MG_EV_ERROR:
       if(_onError) {
         _onError(-1);
       }
@@ -67,8 +71,9 @@ bool MongooseSntpClient::getTime(const char *server, MongooseSntpTimeHandler onT
     DBUGF("Trying to connect to %s", server);
     _onTime = onTime;
 
-    _nc = mg_sntp_get_time(Mongoose.getMgr(), eventHandler, server, this);
+    _nc = mg_sntp_connect(Mongoose.getMgr(), server, eventHandler, this);
     if(_nc) {
+      mg_sntp_request(_nc);
       return true;
     }
 
