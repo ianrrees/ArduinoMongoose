@@ -52,13 +52,16 @@ class MongooseMqttClient
   bool connect(const char *server, const char *client_id, MongooseMqttConnectionHandler onConnect) {
     return connect(MQTT_MQTT, server, client_id, onConnect);
   }
+  /// nb `protocol` isn't used yet
   bool connect(MongooseMqttProtocol protocol, const char *server, const char *client_id, MongooseMqttConnectionHandler onConnect);
 
+  /// nb c-string pointers are stored; strings aren't copied
   void setCredentials(const char *username, const char *password) {
     _username = username;
     _password = password;
   }
 
+  /// nb c-string pointers are stored; strings aren't copied
   void setLastWillAndTestimment(const char *topic, const char *message, bool retain = false) {
     _will_topic = topic;
     _will_message = message;
@@ -97,16 +100,15 @@ class MongooseMqttClient
     _onError = fnHandler;
   }
 
-  bool subscribe(const char *topic);
+  bool subscribe(const char *topic, int qos = 1);
 #ifdef ARDUINO
-  bool subscribe(String &topic) {
-    return subscribe(topic.c_str());
+  bool subscribe(String &topic, int qos = 1) {
+    return subscribe(topic.c_str(), qos);
   }
 #endif
 
   bool publish(const char *topic, const char *payload, bool retain = false, int qos=0) {
-    return false;
-    // return publish(topic, mg_mk_str(payload), retain, qos);
+    return publish(topic, mg_str_s(payload), retain, qos);
   }
   bool publish(const char *topic, MongooseString payload, bool retain = false, int qos=0) {
     return publish(topic, payload.toMgStr(), retain, qos);
@@ -114,16 +116,13 @@ class MongooseMqttClient
   bool publish(const char *topic, mg_str payload, bool retain = false, int qos=0);
 #ifdef ARDUINO
   bool publish(String &topic, const char *payload, bool retain = false, int qos=0) {
-    return false;
-    // return publish(topic.c_str(), mg_mk_str(payload), retain, qos);
+    return publish(topic.c_str(), mg_str_s(payload), retain, qos);
   }
   bool publish(String &topic, String &payload, bool retain = false, int qos=0) {
-    return false;
-    // return publish(topic.c_str(), mg_mk_str(payload.c_str()), retain, qos);
+    return publish(topic.c_str(), mg_str_s(payload.c_str()), retain, qos);
   }
   bool publish(const char *topic, String &payload, bool retain = false, int qos=0) {
-    return false;
-    // return publish(topic, mg_mk_str(payload.c_str()), retain, qos);
+    return publish(topic, mg_str_s(payload.c_str()), retain, qos);
   }
 #endif
 };
