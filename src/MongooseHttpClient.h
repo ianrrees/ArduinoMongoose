@@ -97,8 +97,8 @@ class MongooseHttpClientResponse {
     mg_http_message *_msg;
 
   public:
-    MongooseHttpClientResponse(mg_http_message *msg)// :
-      // _msg(msg)
+    MongooseHttpClientResponse(mg_http_message *msg) :
+      _msg(msg)
     {
     }
 
@@ -107,60 +107,47 @@ class MongooseHttpClientResponse {
 
 
     MongooseString message() {
-      return "";
-      // return MongooseString(_msg->message);
+      return MongooseString(_msg->message);
     }
     MongooseString body() {
-      return "";
-      // return MongooseString(_msg->body);
+      return MongooseString(_msg->body);
     }
 
     MongooseString methodStr() {
-      return "";
-      // return MongooseString(_msg->method);
+      return MongooseString(_msg->method);
     }
     MongooseString uri() {
-      return "";
-      // return MongooseString(_msg->uri);
+      return MongooseString(_msg->uri);
     }
     MongooseString proto() {
-      return "";
-      // return MongooseString(_msg->proto);
+      return MongooseString(_msg->proto);
     }
 
     int respCode() {
-      return 0;
-      // return _msg->resp_code;
+      return mg_http_status(_msg);
     }
     MongooseString respStatusMsg() {
-      return "";
-      // return MongooseString(_msg->resp_status_msg);
+      return _msg->message;
     }
 
     MongooseString queryString() {
-      return "";
-      // return MongooseString(_msg->query_string);
+      return _msg->query;
     }
 
     int headers() {
-      return 0;
-      // int i;
-      // for (i = 0; i < MG_MAX_HTTP_HEADERS && _msg->header_names[i].len > 0; i++) {
-      // }
-      // return i;
+      int i;
+      for (i = 0; i < MG_MAX_HTTP_HEADERS && _msg->headers[i].name.len > 0; i++) {
+      }
+      return i;
     }
     MongooseString headers(const char *name) {
-      return "";
-      // MongooseString ret(mg_get_http_header(_msg, name));
-      // return ret;
+      return mg_http_get_header(_msg, name);
     }
     MongooseString headerNames(int i) {
-      return "";
-      // return MongooseString(_msg->header_names[i]);
+      return _msg->headers[i].name;
     }
     MongooseString headerValues(int i) {
-      return "";
-      // return MongooseString(_msg->header_values[i]);
+      return _msg->headers[i].value;
     }
 
     MongooseString host() {

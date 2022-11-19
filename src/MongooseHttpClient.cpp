@@ -23,7 +23,7 @@ MongooseHttpClient::~MongooseHttpClient()
 
 }
 
-void MongooseHttpClient::eventHandler(struct mg_connection *nc, int ev, void *p, void *u)
+/*static*/ void MongooseHttpClient::eventHandler(struct mg_connection *nc, int ev, void *p, void *u)
 {
   MongooseHttpClientRequest *request = (MongooseHttpClientRequest *)u;
   request->_client ->eventHandler(nc, request, ev, p);
@@ -31,62 +31,91 @@ void MongooseHttpClient::eventHandler(struct mg_connection *nc, int ev, void *p,
 
 void MongooseHttpClient::eventHandler(struct mg_connection *nc, MongooseHttpClientRequest *request, int ev, void *p)
 {
-  if (ev != MG_EV_POLL) { DBUGF("%s %p: %d", __PRETTY_FUNCTION__, nc, ev); }
+  if (ev != MG_EV_POLL) {
+    DBUGF("%s %p: %s(%d)", __PRETTY_FUNCTION__, nc, mg_event_to_cstr(ev), ev);
+  }
 
   switch (ev)
   {
-    case MG_EV_CONNECT: {
-      int connect_status = *(int *)p;
-      DBUGVAR(connect_status);
-      if(0 != connect_status) {
-        DBUGF("connect() error: %s\n", strerror(connect_status));
-      }
+    case MG_EV_ERROR:
+      DBUGF("Mongoose error %s", (const char *)p);
       break;
-    }
-    // TODO
-    // case MG_EV_RECV:
-    {
-      int num_bytes = *(int *)p;
-      DBUGF("MG_EV_RECV, bytes = %d", num_bytes);
-      //struct mbuf &io = nc->recv_mbuf;
-      //DBUGF("Buffer %p, len %d: \n%.*s", io.buf, io.len, io.len, io.buf);
-      break;
-    }
-    // TODO
-    // case MG_EV_SEND:
-    {
-      int num_bytes = *(int *)p;
-      DBUGF("MG_EV_SEND, bytes = %d", num_bytes);
-      break;
-    }
 
-    case MG_EV_HTTP_CHUNK:
-    // TODO
-    // case MG_EV_HTTP_REPLY:
+    case MG_EV_CONNECT: {
+      const char *extra_headers = request->_extraHeaders;
+      if (!extra_headers) {
+        extra_headers = "";
+      }
+
+      mg_str host = mg_url_host(request->_uri);
+
+      if (mg_url_is_ssl(request->_uri)) {
+        mg_tls_opts opts = {.ca = Mongoose.getRootCa(), .srvname = host};
+        mg_tls_init(nc, &opts);
+      }
+
+      int content_length = request->_body ? strlen((const char *)request->_body) : 0;
+      mg_printf(nc,
+                "%s %s HTTP/1.0\r\n"
+                "Host: %.*s\r\n"
+                "Content-Type: octet-stream\r\n"
+                "Content-Length: %d\r\n"
+                "%s\r\n",
+                request->_body ? "POST" : "GET", mg_url_uri(request->_uri),
+                (int) host.len, host.ptr,
+                content_length,
+                extra_headers);
+      mg_send(nc, request->_body, content_length);
+
+      break;
+    }
+    case MG_EV_READ:
     {
-      char addr[32];
+      const struct mg_str *rx_data = (struct mg_str *)p;
+      DBUGF("MG_EV_READ, bytes = %d", rx_data->len);
+      DBUGF("Buffer %p, len %d: \n%.*s",
+            rx_data->ptr, rx_data->len, rx_data->len, rx_data->ptr);
+      break;
+    }
+    case MG_EV_WRITE:
+    {
+      long num_bytes = *(long *)p;
+      DBUGF("MG_EV_WRITE, bytes = %d", num_bytes);
+      break;
+    }
+    case MG_EV_HTTP_MSG:
+    case MG_EV_HTTP_CHUNK:
+    {
       struct mg_http_message *hm = (struct mg_http_message *) p;
-      // TODO
-      // mg_sock_addr_to_str(&nc->sa, addr, sizeof(addr),
-      //                     MG_SOCK_STRINGIFY_IP | MG_SOCK_STRINGIFY_PORT);
+
+#if defined(ENABLE_DEBUG)
+      char addr[
+        39 // 8x16b hex, :-separted IPv6 address (note mg_straddr() in Mongoose
+           // v7.7 has a hardcoded 30-char limit, which is a bug)
+        +3 // formatting
+        +5 // port
+        +1 // null terminator
+      ] = {'\0'};
+
+      mg_straddr(&nc->rem, addr, sizeof(addr));
+
       DBUGF("HTTP %s from %s, body %zu @ %p",
-        MG_EV_HTTP_REPLY == ev ? "reply" : "chunk",
-        addr, hm->body.len, hm->body.p);
+        MG_EV_HTTP_MSG == ev ? "reply" : "chunk",
+        addr, hm->body.len, hm->body.ptr);
+#endif // #if defined(ENABLE_DEBUG)
 
       MongooseHttpClientResponse response(hm);
       if(MG_EV_HTTP_CHUNK == ev)
       {
         if(request->_onBody) {
           request->_onBody(&response);
-          // TODO
-          // nc->flags |= MG_F_DELETE_CHUNK;
+          mg_http_delete_chunk(nc, hm);
         }
       } else {
         if(request->_onResponse) {
           request->_onResponse(&response);
         }
-        // TODO
-        // nc->flags |= MG_F_CLOSE_IMMEDIATELY;
+        nc->is_closing = 1; // Tell mongoose to close this connection
       }
 
       break;
@@ -138,19 +167,30 @@ MongooseHttpClientRequest *MongooseHttpClient::beginRequest(const char *uri)
 
 void MongooseHttpClient::send(MongooseHttpClientRequest *request)
 {
-  // TODO
-  // struct mg_connect_opts opts;
-  // Mongoose.getDefaultOpts(&opts);
+  // Pending https://github.com/jeremypoulter/ArduinoMongoose/issues/22
+  if (request->_client != this) {
+    DBUGF("HTTP request's associated client doesn't match sending client\n");
+    return;
+  }
 
-  // const char *err;
-  // opts.error_string = &err;
+  if (mg_url_is_ssl(request->_uri)) {
+    auto root_ca = Mongoose.getRootCa();
+    if (!root_ca) {
+      DBUGF("Request is to an SSL-enabled URL, but SSL support isn't enabled\n");
+      return;
+    } else if (strlen(root_ca) == 0 || root_ca[0] != '-') {
+      DBUGF("Request is to an SSL-enabled URL, but root CA isn't set/valid\n");
+      return;
+    }
+  }
 
-  // mg_connection *nc = mg_connect_http_opt(Mongoose.getMgr(), eventHandler, request, opts, request->_uri, request->_extraHeaders, (const char *)request->_body);
-  // if(nc) {
-  //   request->_nc = nc;
-  // } else {
-  //   DBUGF("Failed to connect to %s: %s", request->_uri, err);
-  // }
+  mg_connection *nc = mg_http_connect(Mongoose.getMgr(), request->_uri, eventHandler, request);
+
+  if(nc) {
+    request->_nc = nc;
+  } else {
+    DBUGF("Failed to connect to %s", request->_uri);
+  }
 }
 
 MongooseHttpClientRequest::MongooseHttpClientRequest(MongooseHttpClient *client, const char *uri) :
@@ -206,8 +246,7 @@ bool MongooseHttpClientRequest::addHeader(const char *name, size_t nameLength, c
 void MongooseHttpClientRequest::abort()
 {
   if (_nc) {
-    // TODO
-    // _nc->flags |= MG_F_CLOSE_IMMEDIATELY;
+    _nc->is_closing = 1; // Tell mongoose to close this connection
   }
 }
 

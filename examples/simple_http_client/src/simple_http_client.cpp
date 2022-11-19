@@ -19,10 +19,10 @@
 #error Platform not supported
 #endif
 
-#if MG_ENABLE_SSL
-#define PROTO "https"
+#if ARDUINO_MONGOOSE_SSL_SUPPORTED()
+  #define PROTO "https"
 #else
-#define PROTO "http"
+  #define PROTO "http"
 #endif
 
 MongooseHttpClient client;
@@ -30,7 +30,7 @@ MongooseHttpClient client;
 const char *ssid = "wifi";
 const char *password = "password";
 
-#if MG_ENABLE_SSL
+#if ARDUINO_MONGOOSE_SSL_SUPPORTED()
 // Root CA bundle
 const char *root_ca =
 // Amazon Root CA 1, example of multiple Root CAs
@@ -129,7 +129,7 @@ void setup()
 
   Mongoose.begin();
 
-#if MG_ENABLE_SSL
+#if ARDUINO_MONGOOSE_SSL_SUPPORTED()
   Mongoose.setRootCa(root_ca);
 #endif
 
@@ -166,10 +166,12 @@ void setup()
 //  MongooseHttpClientRequest *request = client.beginRequest(PROTO"://jsonplaceholder.typicode.com/posts");
 //  request->setMethod(HTTP_GET);
 //  request->addHeader("X-hello", "world");
-//  request->onBody([](const uint8_t *data, size_t len) {
-//    Serial.printf("%.*s", len, (const char *)data));
-//  };
+//  request->onBody([](MongooseHttpClientResponse *response) {
+//    Serial.println("onBody() callback:");
+//    printResponse(response);
+//  });
 //  request->onResponse([](MongooseHttpClientResponse *response) {
+//    Serial.println("onResponse() callback:");
 //    printResponse(response);
 //  });
 //  client.send(request);
