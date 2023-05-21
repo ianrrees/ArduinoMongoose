@@ -29,20 +29,18 @@ bool MongooseHttpServer::begin(uint16_t port)
 {
   char s_http_port[6];
   utoa(port, s_http_port, 10);
-  // TODO
-  // nc = mg_bind(Mongoose.getMgr(), s_http_port, defaultEventHandler, this);
-  if(nc)
-  {
-    // Set up HTTP server parameters
-    // TODO
-    // mg_set_protocol_http_websocket(nc);
 
-    return true;
-  }
+  char url[20] = {}; // Max is "http://0.0.0.0:65535", https is done below
 
-  return false;
+  // nb Mongoose 7.7 only needs ":xxxxx" , but relying on that might be fragile
+  mg_snprintf(url, sizeof(url), "http://0.0.0.0:%d", port);
+
+  nc = mg_http_listen(Mongoose.getMgr(), url, defaultEventHandler, this);
+
+  return !!nc;
 }
 
+// TODO use new macro
 #if MG_ENABLE_SSL
 bool MongooseHttpServer::begin(uint16_t port, const char *cert, const char *private_key)
 {
@@ -103,7 +101,7 @@ void MongooseHttpServer::onNotFound(MongooseHttpRequestHandler fn)
   defaultEndpoint.onRequest(fn);
 }
 
-void MongooseHttpServer::defaultEventHandler(struct mg_connection *nc, int ev, void *p, void *u)
+/*static*/ void MongooseHttpServer::defaultEventHandler(struct mg_connection *nc, int ev, void *p, void *u)
 {
   MongooseHttpServer *self = (MongooseHttpServer *)u;
   //if (ev != MG_EV_POLL) { DBUGF("defaultEventHandler: nc = %p, self = %p", nc, self); }
